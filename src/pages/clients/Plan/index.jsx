@@ -22,6 +22,7 @@ import { subscriptionApi } from "@services/subscriptionApi";
 import { LoadingSpinner } from "@components/LoadingSpinner";
 import { ErrorDisplay } from "@components/ErrorDisplay";
 import { formatVNDate } from "@configs/formatVNDate";
+import { useAuth } from "@/contexts/AuthContext";
 function Plan() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
@@ -43,7 +44,7 @@ function Plan() {
       setLoading(false);
     }
   };
-  const userId = 1;
+  const { userId } = useAuth();
   const [currentSubscription, setCurrentSubscription] = useState();
 
   const fetchCurrentSubscription = async () => {
