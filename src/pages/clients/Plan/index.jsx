@@ -50,7 +50,7 @@ function Plan() {
   const fetchCurrentSubscription = async () => {
     try {
       const response = await subscriptionApi.getSubscriptionByUserId(
-        Number(userId)
+        userId
       );
       setCurrentSubscription(response.data);
     } catch (err) {

@@ -1,13 +1,13 @@
 import httpRequest from "@configs/httpRequest";
 
 const subscriptionApi = {
+  // get current subscription
   getSubscriptionByUserId: async (userId) => {
     try {
       const response = await httpRequest.get(`/subscription/${userId}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching subscription:", error);
-      throw error;
     }
   },
   createPlan: async (data) => {
