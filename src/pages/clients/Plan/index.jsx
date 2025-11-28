@@ -17,7 +17,7 @@ import {
   Settings,
   UsersIcon,
 } from "lucide-react";
-import { planApi } from "@services/PlanApi";
+import { planApi } from "@services/planApi";
 import { subscriptionApi } from "@services/subscriptionApi";
 import { LoadingSpinner } from "@components/LoadingSpinner";
 import { ErrorDisplay } from "@components/ErrorDisplay";
