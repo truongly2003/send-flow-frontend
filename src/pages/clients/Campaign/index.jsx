@@ -172,11 +172,14 @@ function Campaign() {
       } else {
         // Thêm mới
         response = await campaignApi.createCampaign(payload);
+        console.log(response);
       }
 
       if (response.code === 2000) {
         await fetchCampaigns();
         setShowFormModal(false);
+        alert(response.message);
+      } else {
         alert(response.message);
       }
     } catch (err) {
@@ -213,12 +216,14 @@ function Campaign() {
       const response = await campaignApi.sendCampaignMail(id);
 
       if (response.code === 2000) {
+        alert(response.message);
         setCampaigns((prevCampaigns) =>
           prevCampaigns.map((campaign) =>
             campaign.id === id ? { ...campaign, status: "COMPLETED" } : campaign
           )
         );
       } else {
+        alert(response.message);
         setCampaigns((prevCampaigns) =>
           prevCampaigns.map((campaign) =>
             campaign.id === id ? { ...campaign, status: "FAILED" } : campaign
@@ -369,24 +374,33 @@ function Campaign() {
                       <Trash2 size={16} sm:size={18} />
                     </button>
                   )}
-                 {campaign.status==="SCHEDULED" && ( <button
-                    onClick={() => handleSendCampaignMail(campaign.id)}
-                    className="px-2 sm:px-3 py-2 bg-green-500 hover:bg-green-700 rounded-lg flex items-center gap-2"
-                    title="Gửi"
-                  >
-                    <Send size={16} sm:size={18} />
-                  </button>)}
+                  {campaign.status === "SCHEDULED" && (
+                    <button
+                      onClick={() => handleSendCampaignMail(campaign.id)}
+                      className="px-2 sm:px-3 py-2 bg-green-500 hover:bg-green-700 rounded-lg flex items-center gap-2"
+                      title="Gửi"
+                    >
+                      <Send size={16} sm:size={18} />
+                    </button>
+                  )}
+                  {campaign.status === "FAILED" && (
+                    <button
+                      onClick={() => handleSendCampaignMail(campaign.id)}
+                      className="px-2 sm:px-3 py-2 bg-red-500 hover:bg-red-700 rounded-lg flex items-center gap-2"
+                      title="Gửi lại"
+                    >
+                      <Send size={16} sm:size={18} />
+                    </button>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t border-gray-800">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-400 mb-1">
-                   {
-                    campaign.status==="SCHEDULED" && "Chuẩn bị gửi"
-                    || campaign.status==="COMPLETED" && "Đã gửi" 
-                    || campaign.status==="SENDING" && "Đang gửi"
-                   }
+                    {(campaign.status === "SCHEDULED" && "Chuẩn bị gửi") ||
+                      (campaign.status === "COMPLETED" && "Đã gửi") ||
+                      (campaign.status === "SENDING" && "Đang gửi")}
                   </p>
                   <p className="text-base sm:text-lg font-semibold">
                     {campaign.sentCount.toLocaleString()}

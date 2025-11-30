@@ -5,14 +5,10 @@ import {
   Package,
   Check,
   X,
-  Zap,
-  Crown,
-  Rocket,
   Mail,
   Users,
   Calendar,
   ChevronRight,
-  Star,
   Target,
   Settings,
   UsersIcon,
@@ -20,14 +16,14 @@ import {
 import { planApi } from "@services/planApi";
 import { subscriptionApi } from "@services/subscriptionApi";
 import { LoadingSpinner } from "@components/LoadingSpinner";
-import { ErrorDisplay } from "@components/ErrorDisplay";
+// import { ErrorDisplay } from "@components/ErrorDisplay";
 import { formatVNDate } from "@configs/formatVNDate";
 import { useAuth } from "@/contexts/AuthContext";
 function Plan() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // const [error, setError] = useState(null);
 
   const fetchPlans = async () => {
     try {
@@ -35,26 +31,26 @@ function Plan() {
       const response = await planApi.getAllPlan();
       if (response.code === 2000) {
         setPlans(response.data);
-      } else {
-        setError("Failed to fetch plans");
       }
     } catch (err) {
-      setError("Error fetching plans: " + err.message);
+      console.log(err);
     } finally {
       setLoading(false);
     }
   };
   const { userId } = useAuth();
-  const [currentSubscription, setCurrentSubscription] = useState();
+  const [currentSubscription, setCurrentSubscription] = useState(null);
 
   const fetchCurrentSubscription = async () => {
     try {
-      const response = await subscriptionApi.getSubscriptionByUserId(
-        userId
-      );
-      setCurrentSubscription(response.data);
+      const response = await subscriptionApi.getSubscriptionByUserId(userId);
+      if (response.code === 2000) {
+        setCurrentSubscription(response.data);
+      }
+      // setCurrentSubscription(null)
     } catch (err) {
-      setError("Error fetching plans: " + err.message);
+      console.log(err);
+      console.log("dfd");
     }
   };
   useEffect(() => {
@@ -64,56 +60,6 @@ function Plan() {
 
   const handleSelectPackage = (plan) => {
     navigate(`/payment?planId=${plan.id}`, { state: { plan } });
-  };
-
-  // Map plan to icon and color based on name or id
-  const getPlanStyle = (planName, index) => {
-    const styles = [
-      {
-        icon: Zap,
-        color: "blue",
-        badge: "Cơ bản",
-      },
-      {
-        icon: Crown,
-        color: "purple",
-        badge: "Phổ biến nhất",
-        popular: true,
-      },
-      {
-        icon: Rocket,
-        color: "orange",
-        badge: "Chuyên nghiệp",
-      },
-    ];
-    return styles[index] || styles[0];
-  };
-
-  const getColorClasses = (color) => {
-    const colors = {
-      blue: {
-        bg: "from-blue-900/30 to-blue-800/20",
-        border: "border-blue-500/30",
-        button: "bg-blue-600 hover:bg-blue-700",
-        icon: "text-blue-400 bg-blue-400/10",
-        badge: "bg-blue-400/10 text-blue-400",
-      },
-      purple: {
-        bg: "from-purple-900/30 to-purple-800/20",
-        border: "border-purple-500/30",
-        button: "bg-purple-600 hover:bg-purple-700",
-        icon: "text-purple-400 bg-purple-400/10",
-        badge: "bg-purple-400/10 text-purple-400",
-      },
-      orange: {
-        bg: "from-orange-900/30 to-orange-800/20",
-        border: "border-orange-500/30",
-        button: "bg-orange-600 hover:bg-orange-700",
-        icon: "text-orange-400 bg-orange-400/10",
-        badge: "bg-orange-400/10 text-orange-400",
-      },
-    };
-    return colors[color];
   };
 
   const getPeriodText = (period) => {
@@ -130,11 +76,11 @@ function Plan() {
     return <LoadingSpinner message="Đang tải gói dịch vụ..." />;
   }
 
-  if (error) {
-    return (
-      <ErrorDisplay message={error} onRetry={() => window.location.reload()} />
-    );
-  }
+  // if (error) {
+  //   return (
+  //     <ErrorDisplay message={error} onRetry={() => window.location.reload()} />
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
@@ -177,30 +123,18 @@ function Plan() {
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {plans.map((plan, index) => {
-            const style = getPlanStyle(plan.name, index);
-            const Icon = style.icon;
-            const colors = getColorClasses(style.color);
-            const isCurrent = currentSubscription.packageId === plan.id;
+            let isCurrent;
+            if (currentSubscription === null) {
+              isCurrent = false;
+            } else {
+              isCurrent = currentSubscription.planId === plan.id;
+            }
 
             return (
               <div
-                key={plan.id}
-                className={`relative bg-gradient-to-b ${colors.bg} border ${
-                  colors.border
-                } rounded-2xl p-8 ${
-                  style.popular ? "ring-2 ring-purple-500/50 scale-105" : ""
-                } transition-all hover:scale-105`}
+                key={index}
+                className={`relative bg-gradient-to-b  border rounded-2xl p-8 ring-2 ring-purple-500/50 scale-105 transition-all hover:scale-105`}
               >
-                {/* Popular Badge */}
-                {style.popular && (
-                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                      <Star size={14} fill="currentColor" />
-                      {style.badge}
-                    </div>
-                  </div>
-                )}
-
                 {/* Current Badge */}
                 {isCurrent && (
                   <div className="absolute top-4 right-4">
@@ -212,10 +146,8 @@ function Plan() {
 
                 {/* Package Header */}
                 <div className="text-center mb-8">
-                  <div
-                    className={`inline-flex p-4 rounded-2xl ${colors.icon} mb-4`}
-                  >
-                    <Icon size={32} />
+                  <div className={`inline-flex p-4 rounded-2xl  mb-4`}>
+                    {/* <Icon size={32} /> */}
                   </div>
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                   <div className="flex items-baseline justify-center gap-1 mb-2">
@@ -272,17 +204,11 @@ function Plan() {
                     </span>
                   </div>
                   <div className="flex items-start gap-3">
-                    {plan.allowSmtpCustom ? (
-                      <Check
-                        className="text-green-400 flex-shrink-0 mt-0.5"
-                        size={18}
-                      />
-                    ) : (
-                      <X
-                        className="text-gray-600 flex-shrink-0 mt-0.5"
-                        size={18}
-                      />
-                    )}
+                    <Check
+                      className="text-green-400 flex-shrink-0 mt-0.5"
+                      size={18}
+                    />
+
                     <span
                       className={`text-sm ${
                         plan.allowSmtpCustom ? "text-gray-300" : "text-gray-600"
@@ -307,16 +233,16 @@ function Plan() {
                   onClick={() => handleSelectPackage(plan)}
                   disabled={isCurrent}
                   className={`w-full py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2 ${
-                    isCurrent ? "bg-gray-700 cursor-not-allowed" : colors.button
+                    isCurrent
+                      ? "bg-gray-700 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
                 >
                   {isCurrent ? (
                     "Gói hiện tại"
                   ) : (
                     <>
-                      {currentSubscription.packageId > plan.id
-                        ? "Hạ cấp"
-                        : "Nâng cấp"}
+                      Mua
                       <ChevronRight size={18} />
                     </>
                   )}

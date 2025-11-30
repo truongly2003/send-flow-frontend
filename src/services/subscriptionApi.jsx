@@ -8,6 +8,7 @@ const subscriptionApi = {
       return response.data;
     } catch (error) {
       console.error("Error fetching subscription:", error);
+      return error.response.data
     }
   },
   createPlan: async (data) => {

@@ -18,7 +18,7 @@ const campaignApi = {
       return response.data;
     } catch (error) {
       console.error("Error creating campaign:", error);
-      throw error;
+      return error.response.data;
     }
   },
   deleteCampaign: async (campaignId) => {
@@ -47,7 +47,7 @@ const campaignApi = {
       return response.data
     } catch (error) {
       console.error("Error send campaing mail:",error)
-      throw error;
+      return error.response.data;
     }
   }
 

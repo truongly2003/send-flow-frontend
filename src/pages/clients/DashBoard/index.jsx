@@ -11,14 +11,14 @@ import {
   Clock,
   BarChart3,
   ArrowUpRight,
-  FileText
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { subscriptionApi } from "@services/subscriptionApi";
 import { formatVNDate } from "@configs/formatVNDate";
 import { dashBoardApi } from "@/services/dashBoardApi";
 import { campaignApi } from "@/services/campaignApi";
-
+import { LoadingSpinner } from "@components/LoadingSpinner";
 import { Link } from "react-router-dom";
 
 function Dashboard() {
@@ -26,27 +26,37 @@ function Dashboard() {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [dashboardData, setDashBoardData] = useState(null);
   const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
   const fetchCurrentSubscription = async () => {
     try {
+      setLoading(true);
       const response = await subscriptionApi.getSubscriptionByUserId(userId);
       setCurrentSubscription(response.data);
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
   const fetchDashBoardUser = async () => {
     try {
+      setLoading(true);
       const response = await dashBoardApi.getDashBoardUser(userId);
       setDashBoardData(response.data);
     } catch (err) {
       console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchCampaign = async () => {
     try {
       const response = await campaignApi.getAllCampaign(userId);
-      setCampaigns(response.data.slice(0,3));
+      const campaignFilter=response.data.filter(
+        (c)=>c.status==="COMPLETED" || c.status==="FAILED"
+      )
+      setCampaigns(campaignFilter.slice(0, 3));
     } catch (err) {
       console.log(err);
     }
@@ -75,6 +85,10 @@ function Dashboard() {
     return "bg-green-500";
   };
   const percentage = (dashboardData?.useMail / dashboardData?.limitMail) * 100;
+  if (loading) {
+    return <LoadingSpinner message="Đang tải ..." />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6">
       <div className="max-w-7xl mx-auto">
@@ -87,48 +101,63 @@ function Dashboard() {
         </div>
 
         {/* Subscription Status Card */}
-        <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-500/20 rounded-xl p-6 mb-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Package className="text-blue-400" size={24} />
-                <h2 className="text-xl font-semibold">Gói dịch vụ hiện tại</h2>
+        {currentSubscription ? (
+          <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 border border-blue-500/20 rounded-xl p-6 mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Package className="text-blue-400" size={24} />
+                  <h2 className="text-xl font-semibold">
+                    Gói dịch vụ hiện tại
+                  </h2>
+                </div>
+                <p className="text-2xl font-bold text-blue-400">
+                  {currentSubscription?.planName}
+                </p>
               </div>
-              <p className="text-2xl font-bold text-blue-400">
-                {currentSubscription?.planName}
-              </p>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
+                  currentSubscription?.status
+                )}`}
+              >
+                {currentSubscription?.status === "ACTIVE"
+                  ? "Đang hoạt động"
+                  : "Hết hạn"}
+              </span>
             </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                currentSubscription?.status
-              )}`}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center gap-2 text-gray-300">
+                <Calendar size={18} />
+                <span className="text-sm">
+                  Hết hạn: {formatVNDate(currentSubscription?.endTime)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-300">
+                <Clock size={18} />
+                <span className="text-sm">
+                  Còn{" "}
+                  {Math.ceil(
+                    (new Date(currentSubscription?.endTime) -
+                      new Date(currentSubscription?.startTime)) /
+                      (1000 * 60 * 60 * 24)
+                  )}{" "}
+                  ngày
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-br  text-red-600 from-blue-900/30 to-purple-900/30 border border-blue-500/20 rounded-xl p-6 mb-6">
+            Bạn chưa đăng ký gói dịch vụ. Vui lòng chọn gói để sử dụng hệ thống.
+            <Link
+              className="text-blue-400 underline pl-2 hover:text-blue-300"
+              to="/plan"
             >
-              {currentSubscription?.status === "ACTIVE"
-                ? "Đang hoạt động"
-                : "Hết hạn"}
-            </span>
+              Chọn gói tại đây
+            </Link>
+            .
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-2 text-gray-300">
-              <Calendar size={18} />
-              <span className="text-sm">
-                Hết hạn: {formatVNDate(currentSubscription?.endTime)}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Clock size={18} />
-              <span className="text-sm">
-                Còn{" "}
-                {Math.ceil(
-                  (new Date(currentSubscription?.endTime) -
-                    new Date(currentSubscription?.startTime)) /
-                    (1000 * 60 * 60 * 24)
-                )}{" "}
-                ngày
-              </span>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Quota Card */}
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
@@ -164,8 +193,8 @@ function Dashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <button className="bg-blue-600 hover:bg-blue-700 transition-colors rounded-xl p-4 flex items-center justify-between group">
-            <Link className="flex items-center gap-3">
+          <button  className="bg-blue-600 hover:bg-blue-700 transition-colors rounded-xl p-4 flex items-center justify-between group">
+            <Link to="/campaign" className="flex items-center gap-3">
               <div className="bg-blue-500/20 p-2 rounded-lg">
                 <Plus size={24} />
               </div>
@@ -270,7 +299,7 @@ function Dashboard() {
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
           <h2 className="text-xl font-semibold mb-4">Chiến dịch gần đây</h2>
           <div className="space-y-3">
-            {campaigns ? (
+            {campaigns.length>0 ? (
               campaigns.map((campaign) => (
                 <div
                   key={campaign.id}
@@ -295,7 +324,11 @@ function Dashboard() {
                     <div className="text-right">
                       <p className="text-gray-400">Tỷ lệ</p>
                       <p className="font-semibold text-green-400">
-                        {((campaign.receivedCount / campaign.sentCount) * 100).toFixed(1)}%
+                        {(
+                          (campaign.receivedCount / campaign.sentCount) *
+                          100
+                        ).toFixed(1)}
+                        %
                       </p>
                     </div>
                   </div>
